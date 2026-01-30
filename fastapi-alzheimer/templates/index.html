@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Alzheimer Risk Predictor</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+{% if result %}
+<div class="result">
+Resultado: {{result}}
+</div>
+{% endif %}
+
+<div class="card">
+<h2>🧠 Evaluación de Riesgo de Alzheimer</h2>
+
+<form action="/predict" method="post">
+
+<!-- DEMOGRAFÍA -->
+<div class="section">
+<h3>👤 Datos Demográficos</h3>
+<div class="grid">
+
+<label>Edad
+<input type="number" name="Age" required>
+<small>Edad en años (ej: 72)</small>
+</label>
+
+<label>Género
+<select name="Gender">
+<option value="0">Masculino</option>
+<option value="1">Femenino</option>
+</select>
+<small>Seleccione el sexo biológico</small>
+</label>
+
+<label>Etnia
+    <br>
+<select name="Ethnicity">
+<option value="0">Caucásico</option>
+<option value="1">Afroamericano</option>
+<option value="2">Asiático</option>
+<option value="3">Otro</option>
+
+</select>
+<br>
+<small>Grupo étnico del paciente</small>
+</label>
+
+<label>Nivel Educación
+<select name="EducationLevel">
+<option value="0">Sin estudios</option>
+<option value="1">Secundaria</option>
+<option value="2">Universidad</option>
+<option value="3">Superior</option>
+</select>
+<br>
+<small>Nivel académico alcanzado</small>
+</label>
+
+</div>
+</div>
+
+<!-- ESTILO VIDA -->
+<div class="section">
+<h3>🏃 Estilo de Vida</h3>
+<div class="grid">
+
+<label>BMI
+<input name="BMI">
+<small>Índice de masa corporal (15–40 típico)</small>
+</label>
+
+<label>Alcohol
+<input name="AlcoholConsumption">
+<br>
+<small>Unidades por semana (0–20)</small>
+</label>
+
+<label>Actividad Física
+<input name="PhysicalActivity">
+<small>Horas por semana (0 = nada, 10 = muy activo)</small>
+</label>
+
+<label>Dieta
+<input name="DietQuality">
+<small>Calidad dieta (0 mala — 10 excelente)</small>
+</label>
+
+<label>Sueño
+<input name="SleepQuality">
+<small>Calidad sueño (4 mala — 10 excelente)</small>
+</label>
+
+</div>
+</div>
+
+<!-- HISTORIAL -->
+<div class="section">
+<h3>🩺 Historial Médico</h3>
+<div class="checkgrid">
+
+<label><input type="checkbox" name="Smoking"> Fumador
+<small>Marcar si fuma actualmente</small></label>
+
+<label><input type="checkbox" name="FamilyHistoryAlzheimers"> Familiar Alzheimer
+<small>Antecedentes familiares</small></label>
+
+<label><input type="checkbox" name="CardiovascularDisease"> Cardiovascular</label>
+<label><input type="checkbox" name="Diabetes"> Diabetes</label>
+<label><input type="checkbox" name="Depression"> Depresión</label>
+<label><input type="checkbox" name="HeadInjury"> Trauma craneal</label>
+<label><input type="checkbox" name="Hypertension"> Hipertensión</label>
+
+</div>
+</div>
+
+<!-- CLÍNICOS -->
+<div class="section">
+<h3>📊 Mediciones Clínicas</h3>
+<div class="grid">
+
+<label>Presión Sistólica
+<input name="SystolicBP">
+<small>mmHg (90–180 típico)</small>
+</label>
+
+<label>Presión Diastólica
+<input name="DiastolicBP">
+<small>mmHg (60–120 típico)</small>
+</label>
+
+<label>Colesterol Total
+<input name="CholesterolTotal">
+<br>
+<small>150–300 mg/dL</small>
+</label>
+
+<label>LDL
+<input name="CholesterolLDL">
+<br>
+<small>50–200 mg/dL</small>
+</label>
+
+<label>HDL
+<input name="CholesterolHDL">
+<br>
+<small>20–100 mg/dL</small>
+</label>
+
+<label>Triglicéridos
+<input name="CholesterolTriglycerides">
+<br>
+<small>50–400 mg/dL</small>
+</label>
+
+</div>
+</div>
+
+<!-- COGNITIVO -->
+<div class="section">
+<h3>🧠 Evaluación Cognitiva</h3>
+<div class="grid">
+
+<label>MMSE
+<input name="MMSE">
+<br>
+<small>0–30 (menor = mayor deterioro)</small>
+</label>
+
+<label>Evaluación Funcional
+<input name="FunctionalAssessment">
+<br>
+<small>0–10 (menor = mayor limitación)</small>
+</label>
+
+<label>ADL
+<input name="ADL">
+<br>
+<small>0–10 (menor = más dependencia)</small>
+</label>
+
+</div>
+</div>
+
+<!-- SÍNTOMAS -->
+<div class="section">
+<h3>⚠️ Síntomas</h3>
+<div class="checkgrid">
+
+<label><input type="checkbox" name="MemoryComplaints"> Quejas memoria</label>
+<label><input type="checkbox" name="BehavioralProblems"> Conducta</label>
+<label><input type="checkbox" name="Confusion"> Confusión</label>
+<label><input type="checkbox" name="Disorientation"> Desorientación</label>
+<label><input type="checkbox" name="PersonalityChanges"> Cambios personalidad</label>
+<label><input type="checkbox" name="DifficultyCompletingTasks"> Dificultad tareas</label>
+<label><input type="checkbox" name="Forgetfulness"> Olvidos</label>
+
+</div>
+</div>
+
+<button type="submit">Evaluar Riesgo</button>
+
+</form>
+
+
+
+</div>
+
+</body>
+</html>
