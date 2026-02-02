@@ -13,6 +13,9 @@ from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_sc
 
 BASE_DIR = Path(__file__).resolve().parent
 
+mlflow.set_tracking_uri(
+    "file:///C:/Users/user/OneDrive/Documentos/SEXTO%20CICLO/EXAMENFINALIA/Notebook/mlruns"
+)
 BUFFER_PATH = BASE_DIR / "buffer" / "new_patients.pkl"
 
 MODEL_NAME = "Alzheimer_XGBoost"
@@ -152,7 +155,7 @@ def retrain_incremental():
     # MLflow
     mlflow.set_experiment(EXPERIMENT_NAME)
 
-    with mlflow.start_run(run_name="incremental_5_patients"):
+    with mlflow.start_run(run_name="incremental_4_patients"):
 
         mlflow.log_param("historical_percentage", HISTORICAL_PERCENTAGE)
         mlflow.log_param("new_patients", len(y_new))
@@ -179,13 +182,16 @@ def retrain_incremental():
 # INTERFAZ LLAMADA DESDE FASTAPI
 # =========================
 
-def handle_new_patient(X_new_prep, y_new):
-    """
-    Recibe SOLO X ya transformado desde app.py
-    """
+"""def handle_new_patient(X_new_prep, y_new):
+   
     total = save_to_buffer(X_new_prep, y_new)
 
     if total < MIN_PATIENTS:
         return f"Paciente confirmado ({total}/{MIN_PATIENTS})"
 
     return retrain_incremental()
+"""
+
+def handle_new_patient(X_new_prep, y_new):
+    total = save_to_buffer(X_new_prep, y_new)
+    return f"Paciente guardado en buffer (total: {total})"

@@ -7,7 +7,7 @@ import mlflow
 import mlflow.xgboost
 import pickle
 import urllib.parse
-
+import os
 app = FastAPI(title="Alzheimer Predictor API")
 from fastapi.staticfiles import StaticFiles
 from retrain import handle_new_patient
@@ -65,12 +65,122 @@ def build_features(data: pd.DataFrame):
     return data
 
 
+def validate_form(form: dict) -> list:
+    """Validate essential form fields and ranges. Return list of error messages."""
+    errors = []
+
+    # Age
+    age = form.get('Age')
+    if age is None or not (5 <= int(age) <= 120):
+        errors.append("Edad debe estar entre 40 y 120")
+
+    # BMI
+    bmi = form.get('BMI')
+    try:
+        bmi = float(bmi)
+        if not (15 <= bmi <= 40):
+            errors.append("BMI debe estar entre 15 y 40")
+    except Exception:
+        errors.append("BMI debe ser un número válido")
+
+    # MMSE
+    mmse = form.get('MMSE')
+    if mmse is None or not (0 <= int(mmse) <= 30):
+        errors.append("MMSE debe estar entre 0 y 30")
+
+    # FunctionalAssessment / ADL
+    fa = form.get('FunctionalAssessment')
+    adl = form.get('ADL')
+    if fa is None or not (0 <= int(fa) <= 10):
+        errors.append("Evaluación Funcional debe estar entre 0 y 10")
+    if adl is None or not (0 <= int(adl) <= 10):
+        errors.append("ADL debe estar entre 0 y 10")
+
+    # Blood pressure
+    try:
+        sys = float(form.get('SystolicBP', 0))
+        dia = float(form.get('DiastolicBP', 0))
+        if not (90 <= sys <= 180):
+            errors.append("Presión sistólica fuera de rango (90-180)")
+        if not (60 <= dia <= 120):
+            errors.append("Presión diastólica fuera de rango (60-120)")
+    except Exception:
+        errors.append("Presión arterial debe ser numérica")
+
+    # Cognitive/ratings
+    try:
+        pa = int(form.get('PhysicalActivity', 0))
+        diet = int(form.get('DietQuality', 0))
+        sleep = int(form.get('SleepQuality', 0))
+        for name, val in (('Actividad Física', pa), ('Dieta', diet), ('Sueño', sleep)):
+            if not (0 <= val <= 10):
+                errors.append(f"{name} debe estar entre 0 y 10")
+    except Exception:
+        errors.append("Actividad/Dieta/Sueño debe ser numérico (0-10)")
+
+    return errors
+
+
+def save_prediction_pending(X_prep, pred, proba):
+    os.makedirs("buffer", exist_ok=True)
+    path = "buffer/predictions_pending.pkl"
+
+    if os.path.exists(path):
+        with open(path, "rb") as f:
+            data = pickle.load(f)
+    else:
+        data = []
+
+    data.append({
+        "X": X_prep.tolist(),
+        "predicted_label": int(pred),
+        "confidence": float(proba)
+    })
+
+    with open(path, "wb") as f:
+        pickle.dump(data, f)
+
+
 # =========================
 # HOME FRONTEND
 # =========================
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    defaults = {
+        "Age": 72,
+        "Gender": 0,
+        "BMI": 23.5,
+        "MMSE": 28,
+        "FunctionalAssessment": 5,
+        "ADL": 1,
+        "Hypertension": 1,
+        "Diabetes": 0,
+        "Smoking": 0,
+        "CardiovascularDisease": 0,
+        "MemoryComplaints": 0,
+        "BehavioralProblems": 0,
+        "Confusion": 0,
+        "Disorientation": 0,
+        "PersonalityChanges": 0,
+        "DifficultyCompletingTasks": 1,
+        "Forgetfulness": 0,
+        "CholesterolLDL": 130,
+        "CholesterolHDL": 50,
+        "SystolicBP": 130,
+        "DiastolicBP": 80,
+        "PhysicalActivity": 5,
+        "DietQuality": 2,
+        "SleepQuality": 6,
+        "Ethnicity": 1,
+        "EducationLevel": 3,
+        "AlcoholConsumption": 10,
+        "FamilyHistoryAlzheimers": 0,
+        "Depression": 0,
+        "HeadInjury": 0,
+        "CholesterolTotal": 200,
+        "CholesterolTriglycerides": 150
+    }
+    return templates.TemplateResponse("index.html", {"request": request, "form_data": defaults})
 
 
 # =========================
@@ -95,6 +205,13 @@ async def predict(request: Request,
     DietQuality: int = Form(...),
     SleepQuality: int = Form(...),
 
+    # additional fields from form
+    Ethnicity: int = Form(...),
+    EducationLevel: int = Form(...),
+    AlcoholConsumption: float = Form(...),
+    CholesterolTotal: float = Form(...),
+    CholesterolTriglycerides: float = Form(...),
+
     # checkboxes
     Hypertension: str | None = Form(None),
     Diabetes: str | None = Form(None),
@@ -107,6 +224,9 @@ async def predict(request: Request,
     PersonalityChanges: str | None = Form(None),
     DifficultyCompletingTasks: str | None = Form(None),
     Forgetfulness: str | None = Form(None),
+    FamilyHistoryAlzheimers: str | None = Form(None),
+    Depression: str | None = Form(None),
+    HeadInjury: str | None = Form(None),
 ):
 
     # convertir checkbox → 0/1
@@ -146,13 +266,34 @@ async def predict(request: Request,
         "DietQuality": DietQuality,
         "SleepQuality": SleepQuality,
 
-        # defaults restantes
-        "Ethnicity":0,"EducationLevel":0,"AlcoholConsumption":0,
-        "FamilyHistoryAlzheimers":0,"Depression":0,"HeadInjury":0,
-        "CholesterolTotal":0,"CholesterolTriglycerides":0,
+        # campos restantes (mapear desde el formulario)
+        "Ethnicity": Ethnicity,
+        "EducationLevel": EducationLevel,
+        "AlcoholConsumption": AlcoholConsumption,
+        "FamilyHistoryAlzheimers": chk(FamilyHistoryAlzheimers),
+        "Depression": chk(Depression),
+        "HeadInjury": chk(HeadInjury),
+        "CholesterolTotal": CholesterolTotal,
+        "CholesterolTriglycerides": CholesterolTriglycerides,
     }])
 
     data = build_features(data)
+
+    # Prepare form data dict for validation and template
+    form_data = data.to_dict(orient="records")[0]
+
+    # Server-side validation: return early with message if invalid
+    errors = validate_form(form_data)
+    if errors:
+        msg = "; ".join(errors)
+        return templates.TemplateResponse(
+            "index.html",
+            {
+                "request": request,
+                "msg": msg,
+                "form_data": form_data
+            }
+        )
 
     X = transformador.transform(data)
     X_list = X.tolist()[0]
@@ -171,7 +312,7 @@ async def predict(request: Request,
         advice = "Se recomienda evaluación médica especializada."
 
     confidence = round(proba * 100, 2)
-    form_data = data.to_dict(orient="records")[0]
+    save_prediction_pending(X, pred, proba)
 
 
     return templates.TemplateResponse(
@@ -181,16 +322,13 @@ async def predict(request: Request,
             "result": result,
             "advice": advice,
             "confidence": confidence,
-            "X_prep": X_list,
-            "predicted_label": int(pred),
-            "confirmed": False,
              "form_data": form_data  
         }
     )
 
 
 
-@app.post("/confirm", response_class=HTMLResponse)
+"""@app.post("/confirm", response_class=HTMLResponse)
 async def confirm_case(request: Request):
     form = await request.form()
 
@@ -216,4 +354,4 @@ async def confirm_case(request: Request):
     qs = urllib.parse.urlencode({"msg": notify})
     return RedirectResponse(url=f"/?{qs}", status_code=303)
 
-
+"""

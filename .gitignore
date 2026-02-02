@@ -93,7 +93,7 @@ mlflow.db
 .cache/
 .pytest_cache/
 .mypy_cache/
-
+buffer/
 ########################
 # SECRETS
 ########################
