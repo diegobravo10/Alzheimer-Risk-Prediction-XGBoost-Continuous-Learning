@@ -1,151 +1,159 @@
+# 🧠 Alzheimer Risk Prediction System using Machine Learning
 
-# 🧠 Alzheimer Risk Prediction using Machine Learning
+An intelligent risk prediction system that estimates the probability of Alzheimer’s disease using clinical, demographic, lifestyle, and cognitive assessment data.
 
-An intelligent predictive system that estimates Alzheimer’s disease risk using clinical, demographic, lifestyle, and cognitive assessment data.  
-The project uses **XGBoost** for modeling and **FastAPI** for real-time prediction through a web interface.
+The system is powered by XGBoost for machine learning and FastAPI for real-time inference through a web-based interface.
 
-> ⚠️ This system provides risk estimation — it is not a medical diagnosis tool.
+Disclaimer: This system provides risk estimation only. It is not a medical diagnostic tool and should not be used as a substitute for professional medical evaluation.
 
----
+## Key Features
 
-## Features
+✅ Supervised Machine Learning model using XGBoost
 
-- ✅ Machine Learning model based on **XGBoost**
-- ✅ Clinical + lifestyle + cognitive variables
-- ✅ Feature engineering pipeline
-- ✅ MLflow model tracking (optional)
-- ✅ FastAPI REST service
-- ✅ Interactive web form frontend
-- ✅ Real-time risk prediction
-- ✅ Ready for retraining and model versioning
+✅ Integration of clinical, lifestyle, and cognitive variables
 
----
+✅ Advanced feature engineering pipeline
 
-## 🧠 Model
+✅ Model tracking and versioning with MLflow
 
-The prediction model was trained using:
+✅ RESTful API built with FastAPI
 
-- Demographic data
-- Medical history
-- Lifestyle factors
-- Clinical measurements
-- Cognitive and functional assessments
-- Symptom indicators
+✅ Interactive web frontend (HTML + CSS)
 
-Algorithm used:
+✅ Real-time predictions
 
+✅ Designed for retraining and continuous improvement
+
+##  Machine Learning Model
+### Algorithm
 ```
-
 XGBoost Classifier
-
 ```
 
-Derived features include:
+## Input Data Categories
 
-- cognitive decline score
-- vascular risk score
-- symptom count
-- lifestyle score
-- age interactions
-- clinical ratios
+* Demographic information
 
----
+* Medical history
 
-##  Project Structure
+* Lifestyle factors
 
+* Clinical measurements
+
+* Cognitive and functional assessments
+
+* Symptom indicators
+
+## Engineered Features
+
+* Cognitive decline score
+
+* Vascular risk score
+
+* Lifestyle score
+
+* Symptom count
+
+* Age interaction features
+
+* Clinical ratios
+
+## Methodology
+The system follows a complete machine learning lifecycle, including initial training and continuous improvement through retraining:
+
+1. Exploratory Data Analysis (EDA)
+Statistical analysis and visualization to understand feature distributions, correlations, and potential biases.
+
+2. Data Cleaning and Preprocessing
+Handling missing values, scaling numerical variables, and encoding categorical features.
+
+3. Feature Engineering
+Creation of domain-driven features such as cognitive scores, lifestyle indices, clinical ratios, and interaction terms.
+
+4. Model Training with XGBoost
+Supervised learning using gradient boosting decision trees optimized for tabular medical data.
+
+5. Model Evaluation and Validation
+Performance evaluation using metrics such as accuracy, precision, recall, F1-score, and confusion matrix analysis.
+
+6. Model Tracking and Versioning (MLflow)
+Logging experiments, parameters, metrics, and artifacts to enable reproducibility and model comparison.
+
+7. Model Retraining (Incremental Improvement)
+The model supports retraining with newly collected patient data, allowing continuous performance improvement while preserving historical knowledge.
+
+8. Deployment using FastAPI
+The trained model is exposed as a REST API for real-time inference.
+
+9. Web Interface Integration
+A user-friendly web form allows interactive data input and instant risk prediction.
+
+## Project Structure
 ```
 
-fastapi-alzheimer/
+Project/
 │
-├── app.py
-├── templates/
-│   └── index.html
-├── static/
-│   └── style.css
+│
+├── fastapi-alzheimer/
+|   ├── templates/
+│   |  └── index.html 
+│   ├── static/
+│   |  └── style.css
+│   ├── app.py  
+│   ├── retrain.py
+|   ├── review_and_label.py 
+│
 ├── notebooks/
-│   └── alzheimer-disease-prediction-exploratory-analysis.ipynb
-│   └── transformation-and-processing-of-variables.ipynb
-│   └── training-with-xgboost.ipynb
-│   └── prediction-new-patients
-│   └── ....
+│   ├── alzheimer-disease-prediction-exploratory-analysis.ipynb
+│   ├── transformation-and-processing-of-variables.ipynb
+│   ├── training-with-xgboost.ipynb
+│   ├── prediction-new-patients.ipynb
+│   └── incremental_retraining.ipynb
+│
 └── README.md
-
-````
-
----
-
-## ▶️ Run the API
-
-```bash
-uvicorn app:app --reload
 ```
 
-Open browser:
+## Technology Stack
+### Machine Learning & Data Science
 
-```
-http://127.0.0.1:8000
-```
+* Python
+* Pandas
+* NumPy
+* Scikit-learn
+* XGBoost
+* MLflow
+* Backend
+* FastAPI
+* Uvicorn
+  
+### Frontend
 
----
+* HTML
+* CSS
 
-## 📊 Input Variables
+### Visualization & Analysis
 
-The model uses:
+* Matplotlib
+* Seaborn
+* Plotly
 
-* Age
-* Gender
-* Ethnicity
-* Education
-* BMI
-* Physical activity
-* Diet quality
-* Sleep quality
-* Blood pressure
-* Cholesterol measures
-* MMSE
-* Functional assessment
-* ADL
-* Medical history flags
-* Cognitive symptoms
+## Running the Application
+Start the API
+```uvicorn app:app --reload```
 
-The web interface includes guided ranges for each field.
+### Open in browser
+```http://127.0.0.1:8000```
 
----
-
-## 🔬 Methodology
-
-1. Data exploration
-2. Cleaning and preprocessing
-3. Feature engineering
-4. Model training (XGBoost)
-5. Evaluation
-6. Model versioning
-7. API deployment with FastAPI
-8. Web interface integration
-
----
-
-## Dependencies
-
-Main libraries:
-
-* fastapi
-* uvicorn
-* pandas
-* scikit-learn
-* xgboost
-* mlflow
-
----
 
 ## Disclaimer
 
-This project is for educational and research purposes only.
-It does **not** replace medical evaluation or diagnosis.
+This project is intended only for educational and research purposes.
+It does not replace professional medical diagnosis or clinical decision-making.
 
----
+## 👨‍💻 Authors
 
-## Authors
+* Diego Alexander Bravo Valdiviezo
 
-Diego Bravo & Ariel Paltan — Computer Science Students
+* Ariel Paltán 
 
+ Computer Science Students
