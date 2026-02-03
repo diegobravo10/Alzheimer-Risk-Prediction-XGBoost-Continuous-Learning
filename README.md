@@ -112,6 +112,9 @@ As future work, the project can be extended by incorporating additional clinical
 
 ---
 
+## 5. References
+
+El Kharoua, R. (2024). Alzheimer's Disease Dataset. Kaggle. https://www.kaggle.com/datasets/rabieelkharoua/alzheimers-disease-dataset
 
 
 ## Authors
