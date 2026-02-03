@@ -11,6 +11,11 @@ import os
 app = FastAPI(title="Alzheimer Predictor API")
 from fastapi.staticfiles import StaticFiles
 from retrain import handle_new_patient
+from fastapi import Form
+from retrain import save_to_buffer
+from fastapi import FastAPI
+from pathlib import Path
+from retrain import retrain_incremental, MIN_PATIENTS
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -35,7 +40,6 @@ with open(prep_path, "rb") as f:
     transformador = pickle.load(f)
 
 modelo = mlflow.xgboost.load_model("models:/Alzheimer_XGBoost/latest")
-
 
 
 # =========================
@@ -140,12 +144,35 @@ def save_prediction_pending(X_prep, pred, proba):
     with open(path, "wb") as f:
         pickle.dump(data, f)
 
+def get_pending_and_buffer_info():
+    # pendientes
+    pending_path = Path("buffer/predictions_pending.pkl")
+    if pending_path.exists():
+        with open(pending_path, "rb") as f:
+            pending = pickle.load(f)
+    else:
+        pending = []
+
+    # buffer confirmados
+    buffer_path = Path("buffer/new_patients.pkl")
+    buffer_count = 0
+    if buffer_path.exists():
+        with open(buffer_path, "rb") as f:
+            buffer = pickle.load(f)
+            buffer_count = len(buffer["X"])
+
+    can_retrain = buffer_count >= MIN_PATIENTS
+
+    return pending, buffer_count, can_retrain
+
 
 # =========================
 # HOME FRONTEND
 # =========================
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):
+    pending, buffer_count, can_retrain = get_pending_and_buffer_info()
+
     defaults = {
         "Age": 72,
         "Gender": 0,
@@ -180,7 +207,19 @@ def home(request: Request):
         "CholesterolTotal": 200,
         "CholesterolTriglycerides": 150
     }
-    return templates.TemplateResponse("index.html", {"request": request, "form_data": defaults})
+
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "form_data": defaults,
+            "pending": pending,
+            "buffer_count": buffer_count,
+            "can_retrain": can_retrain,
+            "min_patients": MIN_PATIENTS
+        }
+    )
+
 
 
 # =========================
@@ -315,6 +354,8 @@ async def predict(request: Request,
     save_prediction_pending(X, pred, proba)
 
 
+    pending, buffer_count, can_retrain = get_pending_and_buffer_info()
+
     return templates.TemplateResponse(
         "index.html",
         {
@@ -322,36 +363,97 @@ async def predict(request: Request,
             "result": result,
             "advice": advice,
             "confidence": confidence,
-             "form_data": form_data  
+            "form_data": form_data,
+            "pending": pending,
+            "buffer_count": buffer_count,
+            "can_retrain": can_retrain,
+            "min_patients": MIN_PATIENTS
         }
     )
 
 
 
-"""@app.post("/confirm", response_class=HTMLResponse)
-async def confirm_case(request: Request):
-    form = await request.form()
 
-    X_prep = np.array(eval(form["X_prep"])).reshape(1, -1)
-    predicted_label = int(form["predicted_label"])
-    action = form.get("action")
 
-    if action == "correct":
-        true_label = predicted_label
+@app.post("/confirm")
+def confirm_patient(
+    index: int = Form(...),
+    true_label: int = Form(...)
+):
+    path = Path("buffer/predictions_pending.pkl")
+
+    with open(path, "rb") as f:
+        pending = pickle.load(f)
+
+    if index < 0 or index >= len(pending):
+        return {
+            "msg": "⚠️ Caso ya procesado",
+            "pending_count": len(pending),
+            "buffer_count": buffer_count,
+            "can_retrain": can_retrain,
+            "min_patients": MIN_PATIENTS
+        }
+
+    item = pending.pop(index)
+    predicted_label = item["predicted_label"]
+    
+    # Determinar si hay coincidencia
+    matches = (predicted_label == int(true_label))
+    match_msg = "Coincide con la predicción" if matches else "Diferente a la predicción"
+
+    save_to_buffer(
+        X_prep=np.array(item["X"]),
+        y=[int(true_label)]
+    )
+
+    # Guardar pendientes actualizados
+    if len(pending) > 0:
+        with open(path, "wb") as f:
+            pickle.dump(pending, f)
     else:
-        true_label = int(form["true_label"])
+        # Si no hay más pendientes, eliminar el archivo
+        if path.exists():
+            path.unlink()
 
-    try:
-        msg = handle_new_patient(
-            X_new_prep=X_prep,
-            y_new=[true_label]
-        )
-        notify = f"{msg}"
-    except Exception as e:
-        notify = f"Error al guardar caso: {e}"
+    # Obtener información actualizada para frontend
+    pending, buffer_count, can_retrain = get_pending_and_buffer_info()
+    
+    response_msg = f"Paciente guardado ({match_msg})"
+    if can_retrain:
+        response_msg += ". ¡Listo para reentrenar! (4 pacientes confirmados)"
+    
+    return {
+        "msg": response_msg,
+        "pending_count": len(pending),
+        "buffer_count": buffer_count,
+        "can_retrain": can_retrain,
+        "min_patients": MIN_PATIENTS
+    }
 
-    # Redirect to home so only the form is shown; add a short message in query params
-    qs = urllib.parse.urlencode({"msg": notify})
-    return RedirectResponse(url=f"/?{qs}", status_code=303)
+@app.get("/pending")
+def view_pending():
+    path = Path("buffer/predictions_pending.pkl")
+    if not path.exists():
+        return {"pending": []}
 
-"""
+    with open(path, "rb") as f:
+        pending = pickle.load(f)
+
+    return {"pending": pending}
+
+
+@app.post("/retrain")
+def retrain_model():
+    buffer_path = Path("buffer/new_patients.pkl")
+
+    if not buffer_path.exists():
+        return {"msg": "No hay pacientes confirmados"}
+
+    with open(buffer_path, "rb") as f:
+        buffer = pickle.load(f)
+
+    if len(buffer["X"]) < MIN_PATIENTS:
+        return {"msg": f"Se necesitan al menos {MIN_PATIENTS} pacientes"}
+
+    msg = retrain_incremental()
+    return {"msg": msg}

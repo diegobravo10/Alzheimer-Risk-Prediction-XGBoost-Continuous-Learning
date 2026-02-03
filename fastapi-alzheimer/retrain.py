@@ -124,14 +124,14 @@ def retrain_incremental():
     X_train = np.vstack([X_hist, X_new])
     y_train = np.hstack([y_hist, y_new])
 
-    # modelo base (latest)
+    # modelo base (5)
     modelo_base = mlflow.xgboost.load_model(
-        model_uri=f"models:/{MODEL_NAME}/latest"
+        model_uri=f"models:/{MODEL_NAME}/5"
     )
 
     # nuevo modelo incremental
     modelo = XGBClassifier(
-        n_estimators=100,          # solo árboles nuevos
+        n_estimators=100,          
         learning_rate=0.05,
         max_depth=5,
         eval_metric="logloss",
@@ -177,20 +177,6 @@ def retrain_incremental():
 
     return f"Modelo reentrenado con {len(y_new)} pacientes nuevos"
 
-
-# =========================
-# INTERFAZ LLAMADA DESDE FASTAPI
-# =========================
-
-"""def handle_new_patient(X_new_prep, y_new):
-   
-    total = save_to_buffer(X_new_prep, y_new)
-
-    if total < MIN_PATIENTS:
-        return f"Paciente confirmado ({total}/{MIN_PATIENTS})"
-
-    return retrain_incremental()
-"""
 
 def handle_new_patient(X_new_prep, y_new):
     total = save_to_buffer(X_new_prep, y_new)
