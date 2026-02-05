@@ -60,8 +60,6 @@ The predictive model used in this work is an **XGBoost Classifier**, selected fo
 
 ## 3. Results and Discussion
 
-## 3. Results and Discussion
-
 The experimental results obtained from the developed notebooks demonstrate that the proposed **XGBoost-based model** achieves solid and consistent performance for Alzheimer’s disease risk prediction using structured medical data. Exploratory data analysis revealed meaningful relationships between cognitive assessments, clinical measurements, and Alzheimer-related outcomes, supporting the relevance of the selected variables.
 
 The preprocessing and feature transformation stages ensured data consistency and stability during training. Feature engineering played a key role in improving predictive performance, particularly through the incorporation of cognitive indicators, lifestyle-related variables, and clinical risk factors.
