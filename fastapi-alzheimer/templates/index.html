@@ -297,7 +297,7 @@ Unidades estándar por semana (0–20).
 {% if can_retrain %}
 <div class="card" style="margin-top: 20px;">
   <button id="retrain-btn" class="danger" data-count="{{ buffer_count }}" style="width: 100%;">
-    🔁 Reentrenar modelo ({{ buffer_count }} pacientes)
+     Reentrenar modelo 
   </button>
 </div>
 {% else %}
@@ -305,7 +305,7 @@ Unidades estándar por semana (0–20).
   <div class="notification" id="retrain-status">
     🕒 Reentrenamiento deshabilitado<br>
     <small id="buffer-counter">
-      Pacientes confirmados: {{ buffer_count }} / {{ min_patients }}
+      Pacientes confirmados: {{ buffer_count }}
     </small>
   </div>
 </div>
@@ -356,6 +356,59 @@ document.querySelectorAll('.label-select').forEach(select => {
 
 // Save pending correction via AJAX
 document.querySelectorAll('.btn-save').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const item = btn.closest('.pending-item');
+    const index = item.dataset.index;
+    const true_label = item.querySelector('.label-select').value;
+
+    const fd = new FormData();
+    fd.append('index', index);
+    fd.append('true_label', true_label);
+
+    try {
+      const resp = await fetch('/confirm', {
+        method: 'POST',
+        body: fd
+      });
+
+      const data = await resp.json();
+      console.log('CONFIRM RESPONSE:', data); // 🔍 DEBUG
+
+      if (!resp.ok) {
+        alert(data.msg || 'Error');
+        return;
+      }
+
+      // 🟢 1. Eliminar pendiente
+      item.remove();
+
+      // 🟢 2. Actualizar pendientes
+      const pc = document.getElementById('pending-count');
+      if (pc) pc.textContent = `(${data.pending_count})`;
+
+      // 🟢 3. ACTUALIZAR BUFFER EN TIEMPO REAL
+      const bufferCounter = document.getElementById('buffer-counter');
+      if (bufferCounter) {
+        bufferCounter.textContent = `Pacientes confirmados: ${data.buffer_count}`;
+      }
+
+      // 🟢 4. Mostrar botón de reentrenar si aplica
+      if (data.can_retrain && !document.getElementById('retrain-btn')) {
+        document.getElementById('retrain-status-card').innerHTML = `
+          <button id="retrain-btn" class="danger" style="width:100%">
+            🔁 Reentrenar modelo
+          </button>
+        `;
+      }
+
+    } catch (e) {
+      console.error(e);
+      alert('Error de red');
+    }
+  });
+});
+
+/*document.querySelectorAll('.btn-save').forEach(btn => {
   btn.addEventListener('click', async (e) => {
     e.preventDefault();
     const item = e.target.closest('.pending-item');
@@ -384,7 +437,7 @@ document.querySelectorAll('.btn-save').forEach(btn => {
         // Update buffer counter
         const bufferCounter = document.getElementById('buffer-counter');
         if(bufferCounter){
-          bufferCounter.textContent = `Pacientes confirmados: ${data.buffer_count} / ${data.min_patients || 4}`;
+          bufferCounter.textContent = `Pacientes confirmados: ${data.buffer_count}`;
         }
 
         // Update retrain button state if needed
@@ -427,7 +480,7 @@ document.querySelectorAll('.btn-save').forEach(btn => {
       btn.textContent = '💾 Guardar';
     }
   });
-});
+});*/
 
 // Retrain handler function
 function retrainHandler(e) {

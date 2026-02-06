@@ -385,7 +385,9 @@ def confirm_patient(
     with open(path, "rb") as f:
         pending = pickle.load(f)
 
+    # ⚠️ Caso inválido o ya procesado
     if index < 0 or index >= len(pending):
+        pending, buffer_count, can_retrain = get_pending_and_buffer_info()
         return {
             "msg": "⚠️ Caso ya procesado",
             "pending_count": len(pending),
@@ -394,34 +396,33 @@ def confirm_patient(
             "min_patients": MIN_PATIENTS
         }
 
+    # Extraer caso
     item = pending.pop(index)
     predicted_label = item["predicted_label"]
-    
-    # Determinar si hay coincidencia
-    matches = (predicted_label == int(true_label))
+
+    matches = predicted_label == int(true_label)
     match_msg = "Coincide con la predicción" if matches else "Diferente a la predicción"
 
+    # Guardar en buffer
     save_to_buffer(
         X_prep=np.array(item["X"]),
         y=[int(true_label)]
     )
 
-    # Guardar pendientes actualizados
-    if len(pending) > 0:
+    # Guardar pendientes restantes
+    if pending:
         with open(path, "wb") as f:
             pickle.dump(pending, f)
     else:
-        # Si no hay más pendientes, eliminar el archivo
-        if path.exists():
-            path.unlink()
+        path.unlink(missing_ok=True)
 
-    # Obtener información actualizada para frontend
+    # 🔄 Estado ACTUALIZADO
     pending, buffer_count, can_retrain = get_pending_and_buffer_info()
-    
+
     response_msg = f"Paciente guardado ({match_msg})"
     if can_retrain:
-        response_msg += ". ¡Listo para reentrenar! (4 pacientes confirmados)"
-    
+        response_msg += f". ¡Listo para reentrenar! ({buffer_count} pacientes confirmados)"
+
     return {
         "msg": response_msg,
         "pending_count": len(pending),
@@ -429,6 +430,7 @@ def confirm_patient(
         "can_retrain": can_retrain,
         "min_patients": MIN_PATIENTS
     }
+
 
 @app.get("/pending")
 def view_pending():
