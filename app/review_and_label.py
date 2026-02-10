@@ -43,7 +43,7 @@ for i, item in enumerate(pending):
 
     print(f"✔ Guardado. Total en buffer: {total_buffer}")
 
-# AHORA SÍ, AL FINAL
+
 if total_buffer is not None and total_buffer >= MIN_PATIENTS:
     print("\nUmbral alcanzado. Reentrenando automáticamente...\n")
     msg = retrain_incremental()

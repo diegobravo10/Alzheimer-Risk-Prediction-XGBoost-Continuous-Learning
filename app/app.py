@@ -385,11 +385,11 @@ def confirm_patient(
     with open(path, "rb") as f:
         pending = pickle.load(f)
 
-    # ⚠️ Caso inválido o ya procesado
+    # Caso inválido o ya procesado
     if index < 0 or index >= len(pending):
         pending, buffer_count, can_retrain = get_pending_and_buffer_info()
         return {
-            "msg": "⚠️ Caso ya procesado",
+            "msg": "Caso ya procesado",
             "pending_count": len(pending),
             "buffer_count": buffer_count,
             "can_retrain": can_retrain,
@@ -416,7 +416,7 @@ def confirm_patient(
     else:
         path.unlink(missing_ok=True)
 
-    # 🔄 Estado ACTUALIZADO
+    # Estado ACTUALIZADO
     pending, buffer_count, can_retrain = get_pending_and_buffer_info()
 
     response_msg = f"Paciente guardado ({match_msg})"

@@ -312,7 +312,6 @@ Unidades estándar por semana (0–20).
 {% endif %}
 
 <script>
-// Enfocar y scrollear al primer campo inválido para mejorar la UX
 document.querySelector('form').addEventListener('submit', function(e){
   if(!this.checkValidity()){
     // Dejar que el navegador muestre mensajes de validación
@@ -377,27 +376,27 @@ document.querySelectorAll('.btn-save').forEach(btn => {
       });
 
       const data = await resp.json();
-      console.log('CONFIRM RESPONSE:', data); // 🔍 DEBUG
+      console.log('CONFIRM RESPONSE:', data); 
 
       if (!resp.ok) {
         alert(data.msg || 'Error');
         return;
       }
 
-      // 🟢 1. Eliminar pendiente
+      //  1. Eliminar pendiente
       item.remove();
 
-      // 🟢 2. Actualizar pendientes
+      //  2. Actualizar pendientes
       const pc = document.getElementById('pending-count');
       if (pc) pc.textContent = `(${data.pending_count})`;
 
-      // 🟢 3. ACTUALIZAR BUFFER EN TIEMPO REAL
+      //  3. ACTUALIZAR BUFFER EN TIEMPO REAL
       const bufferCounter = document.getElementById('buffer-counter');
       if (bufferCounter) {
         bufferCounter.textContent = `Pacientes confirmados: ${data.buffer_count}`;
       }
 
-      // 🟢 4. Mostrar botón de reentrenar si aplica
+      // 4. Mostrar botón de reentrenar si aplica
       if (data.can_retrain && !document.getElementById('retrain-btn')) {
         document.getElementById('retrain-status-card').innerHTML = `
           <button id="retrain-btn" class="danger" style="width:100%">
@@ -413,79 +412,6 @@ document.querySelectorAll('.btn-save').forEach(btn => {
   });
 });
 
-/*document.querySelectorAll('.btn-save').forEach(btn => {
-  btn.addEventListener('click', async (e) => {
-    e.preventDefault();
-    const item = e.target.closest('.pending-item');
-    const index = item.dataset.index;
-    const select = item.querySelector('.label-select');
-    const true_label = select.value;
-
-    const fd = new FormData();
-    fd.append('index', index);
-    fd.append('true_label', true_label);
-
-    btn.disabled = true;
-    btn.textContent = '⏳ Guardando...';
-
-    try{
-      const resp = await fetch('/confirm',{method:'POST', body: fd});
-      const data = await resp.json();
-      if(resp.ok){
-        // remove item and update count
-        item.remove();
-        const pc = document.getElementById('pending-count');
-        const newCount = data.pending_count || document.querySelectorAll('.pending-item').length;
-        if(pc) pc.textContent = `(${newCount})`;
-        showToast(data.msg || 'Guardado');
-
-        // Update buffer counter
-        const bufferCounter = document.getElementById('buffer-counter');
-        if(bufferCounter){
-          bufferCounter.textContent = `Pacientes confirmados: ${data.buffer_count}`;
-        }
-
-        // Update retrain button state if needed
-        const retrainBtn = document.getElementById('retrain-btn');
-        const retrainStatusCard = document.getElementById('retrain-status-card');
-        
-        if(data.can_retrain){
-          // Si ahora puede reentrenar, cambiar a botón
-          if(retrainStatusCard){
-            retrainStatusCard.innerHTML = `
-              <button id="retrain-btn" class="danger" data-count="${data.buffer_count}" style="width: 100%;">
-                🔁 Reentrenar modelo (${data.buffer_count} pacientes)
-              </button>
-            `;
-            // Re-attach event listener
-            const newBtn = document.getElementById('retrain-btn');
-            if(newBtn) newBtn.addEventListener('click', retrainHandler);
-          } else if(retrainBtn){
-            retrainBtn.disabled = false;
-            retrainBtn.textContent = `🔁 Reforzar modelo (${data.buffer_count} pacientes)`;
-          }
-        } else if(retrainBtn){
-          // Si hay botón pero ya no puede reentrenar, actualizar texto
-          retrainBtn.disabled = true;
-          retrainBtn.textContent = `🔁 Reforzar modelo (${data.buffer_count} pacientes)`;
-        }
-
-        // Si no hay más pendientes, recargar para actualizar estado
-        if(newCount === 0) {
-          setTimeout(() => location.reload(), 1500);
-        }
-      } else {
-        showToast(data.msg || 'Error guardando', false);
-        btn.disabled = false;
-        btn.textContent = '💾 Guardar';
-      }
-    }catch(err){
-      showToast('Error de red', false);
-      btn.disabled = false;
-      btn.textContent = '💾 Guardar';
-    }
-  });
-});*/
 
 // Retrain handler function
 function retrainHandler(e) {
