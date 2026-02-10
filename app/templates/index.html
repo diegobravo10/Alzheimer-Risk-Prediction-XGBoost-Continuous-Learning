@@ -289,7 +289,7 @@ Unidades estándar por semana (0–20).
     </div>
     {% endfor %}
   </div>
-  <div class="note"><small>Compara la predicción del modelo con tu diagnóstico. Al guardar, se añadirá al buffer para reentrenamiento.</small></div>
+  <div class="note"><small>Compara la predicción del modelo con tu diagnóstico.</small></div>
 </div>
 {% endif %}
 
@@ -327,11 +327,16 @@ document.querySelector('form').addEventListener('submit', function(e){
 
 function showToast(text, success=true){
   const t = document.getElementById('toast');
+  if (!t) {
+    console.warn('Toast no existe:', text);
+    return;
+  }
   t.textContent = text;
   t.className = 'toast ' + (success ? 'ok' : 'err');
   t.classList.remove('hidden');
   setTimeout(()=> t.classList.add('hidden'), 3500);
 }
+
 
 // Update match indicator when label changes
 document.querySelectorAll('.label-select').forEach(select => {
@@ -485,33 +490,36 @@ document.querySelectorAll('.btn-save').forEach(btn => {
 // Retrain handler function
 function retrainHandler(e) {
   e.preventDefault();
+
   const retrainBtn = e.target;
   retrainBtn.disabled = true;
-  const oldText = retrainBtn.textContent;
   retrainBtn.textContent = '🔄 Reentrenando...';
 
-  fetch('/retrain', {method: 'POST'})
+  fetch('/retrain', { method: 'POST' })
     .then(resp => resp.json())
     .then(data => {
       showToast(data.msg || 'Reentrenamiento finalizado');
-      // After retrain, button may be disabled if buffer cleared
-      retrainBtn.disabled = true;
-      retrainBtn.textContent = oldText;
-      // Recargar para actualizar estado completo
-      setTimeout(() => location.reload(), 2000);
+
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000); // puedes ajustar el delay
     })
     .catch(err => {
+      console.error(err);
       showToast('Error reentrenando', false);
       retrainBtn.disabled = false;
-      retrainBtn.textContent = oldText;
+      retrainBtn.textContent = '🔁 Reentrenar modelo';
     });
 }
 
+
+
 // Retrain via AJAX
-const retrainBtn = document.getElementById('retrain-btn');
-if(retrainBtn){
-  retrainBtn.addEventListener('click', retrainHandler);
-}
+document.addEventListener('click', function (e) {
+  if (e.target && e.target.id === 'retrain-btn') {
+    retrainHandler(e);
+  }
+});
 </script>
 
 </body>

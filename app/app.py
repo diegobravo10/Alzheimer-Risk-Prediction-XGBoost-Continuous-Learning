@@ -449,13 +449,26 @@ def retrain_model():
     buffer_path = Path("buffer/new_patients.pkl")
 
     if not buffer_path.exists():
-        return {"msg": "No hay pacientes confirmados"}
+        return {
+            "msg": "No hay pacientes confirmados",
+            "buffer_count": 0,
+            "can_retrain": False
+        }
 
     with open(buffer_path, "rb") as f:
         buffer = pickle.load(f)
 
     if len(buffer["X"]) < MIN_PATIENTS:
-        return {"msg": f"Se necesitan al menos {MIN_PATIENTS} pacientes"}
+        return {
+            "msg": f"Se necesitan al menos {MIN_PATIENTS} pacientes",
+            "buffer_count": len(buffer["X"]),
+            "can_retrain": False
+        }
 
     msg = retrain_incremental()
-    return {"msg": msg}
+
+    return {
+        "msg": msg,
+        "buffer_count": 0,
+        "can_retrain": False
+    }
