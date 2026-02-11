@@ -1,4 +1,4 @@
-# 🧠 An Intelligent Alzheimer’s Risk Prediction System Based on XGBoost and Continuous Learning
+#  An Intelligent Alzheimer’s Risk Prediction System Based on XGBoost and Continuous Learning
 
 ## Abstract
 
